@@ -7,9 +7,9 @@ import sys
 sv = "/usr/bin/sv"
 
 env = os.environ.copy()
-env_string = "/etc/service"
+env_string = "/var/service"
 env["SVDIR"] = env_string
-superuser = "doas"
+superuser = "sudo"
 masked = ["chronyd", "getty-tty1", "getty-tty2", "getty-tty3", "getty-tty4", "getty-tty5", "getty-tty6", "dbus", "haveged", "greetd"]
 
 services = [s for s in os.listdir(env_string) if s not in masked]
