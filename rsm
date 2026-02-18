@@ -1,0 +1,120 @@
+#!/usr/bin/python3
+import curses  # Libreria TUI della stdlib: gestisce schermo, input da tastiera e rendering testuale
+import subprocess
+import os
+import sys
+
+sv = "/usr/bin/sv"
+
+env = os.environ.copy()
+env_string = "/etc/service"
+env["SVDIR"] = env_string
+superuser = "doas"
+masked = ["chronyd", "getty-tty1", "getty-tty2", "getty-tty3", "getty-tty4", "getty-tty5", "getty-tty6", "dbus", "haveged", "greetd"]
+
+services = [s for s in os.listdir(env_string) if s not in masked]
+services.sort()
+
+def get_status(service):
+    try:
+        out = subprocess.check_output([superuser, "env", f"SVDIR={env_string}", sv, "status", service], env=env, text=True)
+        return out.startswith("run:")
+    except subprocess.CalledProcessError as e:
+        print(e)
+        print(e.output)
+        exit()
+
+states = {s: get_status(s) for s in services}
+old_states = states.copy()
+
+def ui(stdscr):
+    # stdscr = "standard screen", la finestra principale fornita da curses.wrapper()
+
+    curses.curs_set(0)
+    # Nasconde il cursore del terminale (esteticamente più pulito per una UI)
+
+    idx = 0
+    # Indice della riga attualmente selezionata
+
+    while True:
+        stdscr.clear()
+        # Pulisce completamente lo schermo (equivalente a ridisegnare un frame)
+
+        h, w = stdscr.getmaxyx()
+        # Ottiene dimensioni correnti del terminale (height, width)
+        # Utile se si vuole adattare la UI dinamicamente
+
+        stdscr.addstr(0, 2, "Runit Service Manager v1.1")
+        # Disegna una stringa alla posizione (y=0, x=2)
+
+        for i, s in enumerate(services):
+            marker = "[x]" if states[s] else "[ ]"
+            line = f"{marker} {s}"
+
+            if i == idx:
+                stdscr.attron(curses.A_REVERSE)
+                # Attiva attributo video "reverse" (invertisce fg/bg)
+                # Serve per evidenziare la riga selezionata
+
+                stdscr.addstr(i + 2, 2, line)
+                # Scrive la riga selezionata
+
+                stdscr.attroff(curses.A_REVERSE)
+                # Disattiva l'attributo reverse per non applicarlo alle righe successive
+            else:
+                stdscr.addstr(i + 2, 2, line)
+                # Scrive normalmente le altre righe
+
+        key = stdscr.getch()
+        # Legge UN input da tastiera (bloccante)
+        # Restituisce il keycode curses (non sempre ASCII)
+
+        if key in (curses.KEY_UP, ord("k")):
+            # KEY_UP = freccia su
+            # ord("k") = binding stile vi
+            idx = (idx - 1) % len(services)
+            # Movimento circolare (wrap-around)
+
+        elif key in (curses.KEY_DOWN, ord("j")):
+            # KEY_DOWN = freccia giù
+            # ord("j") = binding stile vi
+            idx = (idx + 1) % len(services)
+
+        elif key == ord(" "):
+            # SPACE → toggle dello stato del servizio selezionato
+            s = services[idx]
+            states[s] = not states[s]
+
+        elif key in (10, 13):  # ENTER
+            # 10 = LF, 13 = CR (Enter a seconda del terminale)
+            return True
+            # Esce dalla UI restituendo "applica modifiche"
+
+        elif key in (27, ord("q")):
+            # q → uscita senza applicare
+            return False
+
+
+apply_changes = curses.wrapper(ui)
+# wrapper():
+# - inizializza curses in modo sicuro (raw mode, no-echo, ecc.)
+# - crea stdscr
+# - gestisce eccezioni ripristinando il terminale (fondamentale!)
+# - alla fine RIporta il terminale allo stato normale automaticamente
+
+if not apply_changes:
+    print("Cancelled")
+    sys.exit(0)
+
+print("Applying changes...\n")
+for s in services:
+    if states[s] != old_states[s]:
+        try:
+            if states[s]:
+                subprocess.check_call([superuser, "env", f"SVDIR={env_string}", sv, "start", s], env=env)
+                print(f" * start {s}")
+            else:
+                subprocess.check_call([superuser, "env", f"SVDIR={env_string}", sv, "stop", s], env=env)
+                print(f" * stop {s}")
+        except subprocess.CalledProcessError as e:
+            print(f"error on {s}: {e}")
