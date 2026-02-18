@@ -1,13 +1,21 @@
 # Runit-Service-Manager
 T-ui manager for runit services
 
-### Description
+## Description
 Using runit is awesome and easy. `sv start [service]` and `sv stop [service]` just works, but rsm (Runit Service Manager) is created to avoid typing NetworkManager, mysqld and friends every time you need to.
+
+### Features:
+- starting services
+- stopping services
+
+### Work in progress:
+- Creating services
+- Removing services
 
 ![rsm](https://github.com/Sbatushe/Runit-Service-Manager/blob/main/example.jpeg)
 
 
-### Download
+## Download
 Clone the repository:
 ```
 git clone https://github.com/Sbatushe/Runit-Service-Manager
@@ -18,7 +26,7 @@ cd Runit-Service-Manager
 chmod +x rsm
 ```
 
-### Configuration
+## Configuration
 rsm is just a small python3 script, thus the configuration is made via editing the source code. This is a mandatory step.
 Don't worry, you need to setup just some variable before running.
 
@@ -36,12 +44,12 @@ superuser = "sudo"
 masked = ["chronyd", "getty-tty1", "getty-tty2", "getty-tty3", "getty-tty4", "getty-tty5", "getty-tty6", "dbus", "haveged", "greetd"]
 ```
 
-### Install
+## Install
 ```
 cp rsm /usr/bin/
 ```
 
-### Usage
+## Usage
 rsm is meant to be used with GUI tools such as waybar or a keyboard shortcut. To run it just call it without sudo/doas.
 Once running you can:
   - move down/up with your keys
