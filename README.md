@@ -4,7 +4,8 @@ T-ui manager for runit services
 ### Description
 Using runit is awesome and easy. `sv start [service]` and `sv stop [service]` just works, but rsm (Runit Service Manager) is created to avoid typing NetworkManager, mysqld and friends every time you need to.
 
-[screen]
+![rsm](https://github.com/Sbatushe/Runit-Service-Manager/blob/main/example.jpeg)
+
 
 ### Download
 Clone the repository:
