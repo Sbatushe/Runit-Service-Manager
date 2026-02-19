@@ -1,6 +1,9 @@
 # Runit-Service-Manager
 T-ui manager for runit services
 
+## Migration
+This repo migrated to [Codeberg](https://codeberg.org/Sbatushe/service-management-suite)
+
 ## Description
 Using runit is awesome and easy. `sv start [service]` and `sv stop [service]` just works, but rsm (Runit Service Manager) is created to avoid typing NetworkManager, mysqld and friends every time you need to.
 
